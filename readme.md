@@ -1,6 +1,6 @@
-# auto-route-plugin
+# webpack-plugin-auto-routes
 
-> 自动生成路由表的 webpack 插件
+> 基于webpack的约定式路由插件
 
 ## 介绍
 
