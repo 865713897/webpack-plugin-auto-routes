@@ -59,8 +59,6 @@ class WebpackPluginAutoRoutes {
   apply(compiler: Compiler) {
     compiler.hooks.afterPlugins.tap('WebpackPluginAutoRoutes', async () => {
       try {
-        console.log(2333333);
-        
         await this.run();
       } catch (error) {
         console.error('WebpackPluginAutoRoutes failed', error);
