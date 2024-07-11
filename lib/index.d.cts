@@ -1,7 +1,7 @@
 import { Compiler } from 'webpack';
 
 type routingModeType = 'browser' | 'hash';
-interface IAutoRoutePlugin {
+interface IAutoRoutes {
     excludeFolders?: string[];
     routingMode?: routingModeType;
     onlyRoutes?: boolean;
@@ -34,7 +34,7 @@ declare class WebpackPluginAutoRoutes {
     isTsComponent: boolean;
     hasLayouts: boolean;
     isDev: boolean;
-    constructor(options: IAutoRoutePlugin);
+    constructor(options: IAutoRoutes);
     apply(compiler: Compiler): void;
     run(): Promise<void>;
     generateRoutes(appData: IAppData): Promise<void>;
@@ -70,4 +70,4 @@ declare class WebpackPluginAutoRoutes {
     writeToFileAsync(filePath: string, fileSuffix: string, content: string): void;
 }
 
-export { type IAppData, type IAutoRoutePlugin, type IRoute, type Options, WebpackPluginAutoRoutes as default, type routingModeType };
+export { type IAppData, type IAutoRoutes, type IRoute, type Options, WebpackPluginAutoRoutes as default, type routingModeType };
