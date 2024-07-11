@@ -1,0 +1,37 @@
+{
+  "name": "webpack-plugin-auto-routes",
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib/index.cjs",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "exports": {
+    "import": {
+      "types": "./lib/index.d.mts",
+      "default": "./lib/index.mjs"
+    },
+    "require": {
+      "types": "./lib/index.d.cts",
+      "default": "./lib/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "unbuild"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "peerDependencies": {
+    "webpack": ">=5.91.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "@types/webpack": "^5.28.5",
+    "unbuild": "^2.0.0"
+  },
+  "dependencies": {
+    "chokidar": "^3.6.0"
+  }
+}
