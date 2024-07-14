@@ -26,6 +26,11 @@ export function getRoutes() {
         name: 'home',
         Component: withLazyLoad(React.lazy(() => import(/* webpackChunkName: "src__pages__home__index" */ '../pages/home/index.jsx'))),
         children: []
+      },{
+        path: '/login',
+        name: 'login',
+        Component: withLazyLoad(React.lazy(() => import(/* webpackChunkName: "src__pages__login__index" */ '../pages/login/index.jsx'))),
+        children: []
       }]
     }
   ];

@@ -49,7 +49,7 @@ export const generateRouterComponent = async (appData: IAppData) => {
   ];
   if (isTs) {
     content.splice(
-      4,
+      3,
       0,
       '\ninterface IRoute {\n  path: string;\n  name: string;\n  Component: React.FC;\n  children?: IRoute[];\n}',
     );
