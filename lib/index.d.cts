@@ -16,6 +16,7 @@ interface IAppData {
     absPagesPath: string;
     absRouterPath: string;
     absLayoutsPath: string;
+    absLoadingPath: string;
     excludeFolders: string[];
     routingMode: 'browser' | 'hash';
     indexPath: string;
@@ -39,6 +40,7 @@ declare class WebpackPluginAutoRoutes {
         absNodeModulesPath: string;
         absRouterPath: string;
         absLayoutsPath: string;
+        absLoadingPath: string;
         excludeFolders: string[];
         routingMode: routingModeType;
         indexPath: string;

@@ -22,6 +22,7 @@ export interface IAppData {
   absPagesPath: string;
   absRouterPath: string;
   absLayoutsPath: string;
+  absLoadingPath: string;
   excludeFolders: string[];
   routingMode: 'browser' | 'hash';
   indexPath: string;
@@ -62,9 +63,12 @@ class WebpackPluginAutoRoutes {
   run() {
     const cwd = process.cwd(); // 获取当前工作目录
     const appData = this.getAppData({ cwd }); // 获取数据
-    const watcher = chokidar.watch([appData.absPagesPath, appData.absLayoutsPath], {
-      ignoreInitial: true,
-    });
+    const watcher = chokidar.watch(
+      [appData.absPagesPath, appData.absLayoutsPath, appData.absLoadingPath],
+      {
+        ignoreInitial: true,
+      },
+    );
     watcher.on('all', (event) => {
       if (event === 'add' || event === 'unlink') {
         this.generateRoutes(appData);
@@ -88,6 +92,7 @@ class WebpackPluginAutoRoutes {
     const absNodeModulesPath = path.resolve(cwd, 'node_modules');
     const absRouterPath = path.resolve(cwd, 'src/router');
     const absLayoutsPath = path.resolve(cwd, 'src/layouts');
+    const absLoadingPath = path.resolve(cwd, 'src/loading');
 
     const paths = {
       cwd,
@@ -96,6 +101,7 @@ class WebpackPluginAutoRoutes {
       absNodeModulesPath,
       absRouterPath,
       absLayoutsPath,
+      absLoadingPath,
       excludeFolders: this.excludeFolders,
       routingMode: this.routingMode,
       indexPath: this.indexPath,

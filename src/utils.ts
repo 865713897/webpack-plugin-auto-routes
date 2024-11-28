@@ -72,6 +72,16 @@ export const isTsProject = (root: string) => {
   return existsSync(path.join(root, 'tsconfig.json'));
 };
 
+// 判断项目是否有layouts组件
+export const hasLayoutComp = (root: string) => {
+  return tryPaths([path.join(root, 'index.jsx'), path.join(root, 'index.tsx')]).length > 0;
+};
+
+// 判断项目是否有loading组件
+export const hasLoadingComponent = (root: string) => {
+  return tryPaths([path.join(root, 'index.jsx'), path.join(root, 'index.tsx')]).length > 0;
+};
+
 // 获取chunkName
 export const getChunkName = (path: string) => {
   return (
@@ -82,4 +92,12 @@ export const getChunkName = (path: string) => {
       .replace(/\//g, '__')
       .toLowerCase()
   );
+};
+
+// 获取有效路径
+export const tryPaths = (paths: string[]) => {
+  for (const path of paths) {
+    if (existsSync(path)) return path;
+  }
+  return '';
 };
