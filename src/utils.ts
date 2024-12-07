@@ -2,7 +2,12 @@ import path from 'path';
 import { mkdir, existsSync, readdirSync, readFileSync, writeFileSync, statSync } from 'fs';
 
 // 写入文件
-export const writeToFileAsync = async (filePath: string, fileSuffix: string, content: string) => {
+export const writeToFileAsync = async (
+  filePath: string,
+  fileSuffix: string,
+  content: string,
+  generateNotExist: boolean = false,
+) => {
   try {
     await new Promise<void>((resolve, reject) => {
       mkdir(filePath, { recursive: true }, (err) => {
@@ -13,7 +18,7 @@ export const writeToFileAsync = async (filePath: string, fileSuffix: string, con
         const outputFile = path.join(filePath, fileSuffix);
         if (existsSync(outputFile)) {
           const oldContent = readFileSync(outputFile, 'utf-8');
-          if (oldContent === content) return resolve();
+          if (oldContent === content || generateNotExist) return resolve();
         }
         writeFileSync(outputFile, content, 'utf-8');
         resolve();
@@ -77,11 +82,6 @@ export const hasLayoutComp = (root: string) => {
   return tryPaths([path.join(root, 'index.jsx'), path.join(root, 'index.tsx')]).length > 0;
 };
 
-// 判断项目是否有loading组件
-export const hasLoadingComponent = (root: string) => {
-  return tryPaths([path.join(root, 'index.jsx'), path.join(root, 'index.tsx')]).length > 0;
-};
-
 // 获取chunkName
 export const getChunkName = (path: string) => {
   return (
@@ -101,3 +101,48 @@ export const tryPaths = (paths: string[]) => {
   }
   return '';
 };
+
+// 防抖
+export function debounce<T extends (...args: any[]) => void>(
+  func: T,
+  wait: number,
+  immediate: boolean = false,
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout | null = null;
+
+  return function (...args: Parameters<T>) {
+    const later = () => {
+      timeout = null;
+      if (!immediate) {
+        func(...args);
+      }
+    };
+
+    const shouldCallNow = immediate && !timeout;
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+
+    timeout = setTimeout(later, wait);
+
+    if (shouldCallNow) {
+      func(...args);
+    }
+  };
+}
+
+// 节流
+export function throttle<T extends (...args: any[]) => void>(
+  func: T,
+  wait: number,
+): (...args: Parameters<T>) => void {
+  let lastTime: number = 0;
+
+  return function (...args: Parameters<T>) {
+    const now = Date.now();
+    if (now - lastTime >= wait) {
+      func(...args);
+      lastTime = now;
+    }
+  };
+}

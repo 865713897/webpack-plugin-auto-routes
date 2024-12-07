@@ -1,30 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { HashRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { getRoutes } from './routes';
 
 export default function AppRouter() {
-  const [routes, setRoutes] = useState({});
-  const [routeComponents, setRouteComponents] = useState({})
+  const { routes, routeComponents } = getRoutes();
 
-  useEffect(() => {
-    const { routes, routeComponents } = getRoutes();
-    setRoutes(routes);
-    setRouteComponents(routeComponents);
-  }, []);
   const renderRoutes = () => {
     return Object.keys(routeComponents).map((key) => {
       const { id, parentId, path, isLayout } = routes[key];
       if (isLayout) return null;
-      const LayoutComponent = routeComponents[parentId];
+      const LayoutComponent = parentId ? routeComponents[parentId] : null;
       const Component = routeComponents[id];
       if (LayoutComponent) {
         return (
           <Route element={<LayoutComponent />} key={key}>
             <Route key={id} path={path} element={<Component />} />
           </Route>
-        )
+        );
       }
-      return <Route key={id} path={path} element={<Component />} />
+      return <Route key={id} path={path} element={<Component />} />;
     });
   };
 
