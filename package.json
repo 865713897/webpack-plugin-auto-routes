@@ -1,6 +1,6 @@
 {
   "name": "webpack-plugin-auto-routes",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "",
   "main": "lib/index.cjs",
   "types": "lib/index.d.ts",
@@ -22,7 +22,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "peerDependencies": {
     "webpack": ">=5.91.0"
   },

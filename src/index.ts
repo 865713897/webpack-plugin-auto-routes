@@ -2,14 +2,16 @@ import path from 'path';
 import { Compiler } from 'webpack';
 import chokidar from 'chokidar';
 import { generateRouterComponent, generateRoutesFile } from './core';
-import { debounce } from './utils';
+import { debounce, isExistRouter } from './utils';
 
-export type routingModeType = 'browser' | 'hash';
+export type modeType = 'browser' | 'hash';
 
 export interface IAutoRoutes {
-  excludeFolders?: string[];
-  routingMode?: routingModeType;
-  onlyRoutes?: boolean;
+  context?: string;
+  entry?: string;
+  ignoreFolders?: string[];
+  ignoreFiles?: string[];
+  mode?: modeType;
   indexPath?: string;
 }
 
@@ -23,27 +25,48 @@ export interface IAppData {
   absPagesPath: string;
   absRouterPath: string;
   absLayoutsPath: string;
-  excludeFolders: string[];
-  routingMode: 'browser' | 'hash';
+  ignoreFolders: string[];
+  ignoreFiles: string[];
+  mode: modeType;
   indexPath: string;
 }
 
 class WebpackPluginAutoRoutes {
-  excludeFolders: string[] = [];
-  routingMode: routingModeType = 'browser';
+  context: string = '';
+  entry: string = '';
+  ignoreFolders: string[] = [];
+  ignoreFiles: string[] = ['meta.json'];
+  mode: modeType = 'browser';
   indexPath = '';
   isTsComponent = false;
   hasLayouts = false;
   isDev = true;
 
-  constructor(options: IAutoRoutes) {
-    const {
-      excludeFolders = ['components'],
-      routingMode = 'browser',
-      indexPath = '/index',
-    } = options || {};
-    this.excludeFolders = excludeFolders;
-    this.routingMode = routingMode;
+  constructor(options: IAutoRoutes = {}) {
+    const defaultOptions = {
+      context: '',
+      entry: '',
+      ignoreFolders:
+        'components,service,services,utils,assets,styles,types,hooks,interfaces,api,constants,models'.split(
+          ',',
+        ),
+      ignoreFiles:
+        'const,service,services,utils,assets,styles,types,hooks,interfaces,api,constants,models'.split(
+          ',',
+        ),
+      mode: 'browser' as modeType,
+      indexPath: '/',
+    };
+    const { ignoreFolders: _ignoreFolders = [], ignoreFiles: _ignoreFiles = [], ...rest } = options;
+    const { context, entry, ignoreFolders, ignoreFiles, mode, indexPath } = {
+      ...defaultOptions,
+      ...rest,
+    };
+    this.context = context;
+    this.entry = entry;
+    this.ignoreFolders = [...ignoreFolders, ..._ignoreFolders];
+    this.ignoreFiles = [...ignoreFiles, ..._ignoreFiles];
+    this.mode = mode;
     this.indexPath = indexPath;
   }
 
@@ -52,44 +75,55 @@ class WebpackPluginAutoRoutes {
       try {
         this.run();
       } catch (error) {
-        console.error('WebpackPluginAutoRoutes failed', error);
+        throw new Error(`WebpackPluginAutoRoutes failed, ${error}`);
       }
     });
   }
 
-  run() {
+  private run() {
     const cwd = process.cwd(); // 获取当前工作目录
     const appData = this.getAppData({ cwd }); // 获取数据
+
     const watchFileSuffix = ['js', 'jsx', 'ts', 'tsx', 'meta.json'];
-    const watchChangeFileSuffix = ['meta.json'];
     const watcher = chokidar.watch([appData.absPagesPath, appData.absLayoutsPath], {
       ignoreInitial: true,
     });
+
     watcher.on(
       'all',
-      debounce((event, path) => {
-        const isWatchFile = watchFileSuffix.some((suffix) => path.endsWith(suffix));
-        const isWatchChangeFile = watchChangeFileSuffix.some((suffix) => path.endsWith(suffix));
-        if ((event === 'add' || event === 'unlink') && isWatchFile) {
-          generateRoutesFile(appData, false);
-        } else if (event === 'change' && isWatchChangeFile) {
-          generateRoutesFile(appData, true);
+      debounce((event: 'add' | 'unlink' | 'change', filePath: string) => {
+        const isWatchFile = watchFileSuffix.some((suffix) => filePath.endsWith(suffix));
+        if (isWatchFile) {
+          if (['add', 'unlink'].includes(event)) {
+            this.generate(appData);
+          } else if (event === 'change' && filePath.endsWith('meta.json')) {
+            this.generate(appData, true);
+          }
         }
       }, 300),
     );
-    generateRouterComponent(appData); // 只生成1次
-    generateRoutesFile(appData, false);
+
+    this.generate(appData);
   }
 
   // 获取数据
-  getAppData({ cwd }: Options): IAppData {
+  private getAppData({ cwd }: Options): IAppData {
+    const resolveAppPath = (relativePath: string, base = cwd) => path.resolve(base, relativePath);
     // 执行命令获取数据
-    const absSrcPath = path.resolve(cwd, 'src');
-    const absPagesPath = path.resolve(cwd, 'src/pages');
-    const absNodeModulesPath = path.resolve(cwd, 'node_modules');
-    const absRouterPath = path.resolve(cwd, 'src/router');
-    const absLayoutsPath = path.resolve(cwd, 'src/layouts');
-
+    const absSrcPath = resolveAppPath('src');
+    const absNodeModulesPath = resolveAppPath('node_modules');
+    const absRouterPath = resolveAppPath('src/router');
+    const absLayoutsPath = resolveAppPath('src/layouts');
+    let absPagesPath = resolveAppPath('src/pages');
+    if (this.entry) {
+      if (path.isAbsolute(this.entry)) {
+        absPagesPath = this.entry;
+      } else if (this.context) {
+        absPagesPath = resolveAppPath(this.entry, this.context);
+      } else {
+        throw 'context is required when entry is not absolute!';
+      }
+    }
     const paths = {
       cwd,
       absSrcPath,
@@ -97,11 +131,25 @@ class WebpackPluginAutoRoutes {
       absNodeModulesPath,
       absRouterPath,
       absLayoutsPath,
-      excludeFolders: this.excludeFolders,
-      routingMode: this.routingMode,
+      ignoreFolders: this.ignoreFolders,
+      ignoreFiles: this.ignoreFiles,
+      mode: this.mode,
       indexPath: this.indexPath,
     };
     return paths;
+  }
+
+  private generate(appData: IAppData, isMetaChange = false) {
+    const routerComponentPaths = [
+      path.resolve(appData.absRouterPath, 'index.tsx'),
+      path.resolve(appData.absRouterPath, 'index.jsx'),
+      path.resolve(appData.absRouterPath, 'index.js'),
+      path.resolve(appData.absRouterPath, 'index.ts'),
+    ];
+    if (!isExistRouter(routerComponentPaths)) {
+      generateRouterComponent(appData);
+    }
+    generateRoutesFile(appData, isMetaChange);
   }
 }
 

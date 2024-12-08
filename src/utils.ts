@@ -2,12 +2,7 @@ import path from 'path';
 import { mkdir, existsSync, readdirSync, readFileSync, writeFileSync, statSync } from 'fs';
 
 // 写入文件
-export const writeToFileAsync = async (
-  filePath: string,
-  fileSuffix: string,
-  content: string,
-  generateNotExist: boolean = false,
-) => {
+export const writeToFileAsync = async (filePath: string, fileSuffix: string, content: string) => {
   try {
     await new Promise<void>((resolve, reject) => {
       mkdir(filePath, { recursive: true }, (err) => {
@@ -18,7 +13,7 @@ export const writeToFileAsync = async (
         const outputFile = path.join(filePath, fileSuffix);
         if (existsSync(outputFile)) {
           const oldContent = readFileSync(outputFile, 'utf-8');
-          if (oldContent === content || generateNotExist) return resolve();
+          if (oldContent === content) return resolve();
         }
         writeFileSync(outputFile, content, 'utf-8');
         resolve();
@@ -45,11 +40,16 @@ export const deepReadDirSync = (root: string, deep: boolean) => {
 };
 
 // 获取文件
-export const getFiles = (root: string, excludeFolders: string[], deep: boolean) => {
+export const getFiles = (
+  root: string,
+  ignoreFolders: string[],
+  ignoreFiles: string[],
+  deep: boolean,
+) => {
   if (!existsSync(root)) return [];
   const fileList = deepReadDirSync(root, deep);
   return fileList.filter((file) => {
-    const isPageComponent = TestPageComponent(file, excludeFolders);
+    const isPageComponent = TestPageComponent(file, ignoreFolders, ignoreFiles);
     const isLayoutComponent = TestLayoutComponent(file);
     if (deep) {
       return isPageComponent;
@@ -59,17 +59,28 @@ export const getFiles = (root: string, excludeFolders: string[], deep: boolean) 
 };
 
 // 判断哪些文件是页面组件
-const TestPageComponent = (file: string, excludeFolders: string[]) => {
-  const fileRegex = /\.(j|t)sx?$/;
-  const typeFileRegex = /.*\.d\.ts$/;
-  const excludeRegex = new RegExp(`(${excludeFolders.join('|')})\\/`);
+const TestPageComponent = (file: string, ignoreFolders: string[], ignoreFiles: string[]) => {
+  if (typeof file !== 'string' || !Array.isArray(ignoreFolders)) {
+    throw new Error('Invalid arguments: file should be a string and ignoreFolders an array.');
+  }
+  const PAGE_FILE_REGEX = /\.(jsx?|tsx?)$/; // 匹配 .js, .jsx, .ts, .tsx
+  const TYPE_FILE_REGEX = /\.d\.ts$/; // 排除类型声明文件
 
-  return fileRegex.test(file) && !typeFileRegex.test(file) && !excludeRegex.test(file);
+  const escapeRegex = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const ignoreFoldersRegex = new RegExp(`(${ignoreFolders.map(escapeRegex).join('|')})\\/`);
+  const ignoreFilesRegex = new RegExp(`(${ignoreFiles.map(escapeRegex).join('|')})$`);
+
+  return (
+    PAGE_FILE_REGEX.test(file) && // 文件扩展名符合页面组件
+    !TYPE_FILE_REGEX.test(file) && // 排除类型声明文件
+    !ignoreFilesRegex.test(file) && // 排除常见工具类文件
+    !ignoreFoldersRegex.test(file) // 排除指定文件夹
+  );
 };
 
 // 是否是layout组件
 const TestLayoutComponent = (file: string) => {
-  return /\/layouts\/index/.test(file);
+  return /\/src\/layouts\/index/.test(file);
 };
 
 // 判断项目是否为ts项目
@@ -77,10 +88,8 @@ export const isTsProject = (root: string) => {
   return existsSync(path.join(root, 'tsconfig.json'));
 };
 
-// 判断项目是否有layouts组件
-export const hasLayoutComp = (root: string) => {
-  return tryPaths([path.join(root, 'index.jsx'), path.join(root, 'index.tsx')]).length > 0;
-};
+// 判断是否存在router组件
+export const isExistRouter = (filePaths: string[]) => tryPaths(filePaths).length > 0;
 
 // 获取chunkName
 export const getChunkName = (path: string) => {

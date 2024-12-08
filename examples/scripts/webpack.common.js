@@ -3,7 +3,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const AutoRoutePlugin = require('webpack-plugin-auto-routes');
-const WebpackBar = require('webpackbar');
+const BetterInfo = require('webpack-plugin-better-info');
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -114,8 +114,8 @@ module.exports = {
       template: path.resolve(__dirname, '../public/index.html'),
     }),
     new AutoRoutePlugin({
-      routingMode: 'hash',
-      onlyRoutes: false,
+      entry: path.resolve(__dirname, '../src/pages'),
+      mode: 'hash',
       indexPath: '/home',
     }),
     new CopyPlugin({
@@ -130,10 +130,7 @@ module.exports = {
         },
       ],
     }),
-    new WebpackBar({
-      name: 'webpack',
-      color: '#41b883',
-    }),
+    new BetterInfo({}),
     !isDev &&
       new MiniCssExtractPlugin({
         filename: 'static/css/[name].[contenthash:8].css',

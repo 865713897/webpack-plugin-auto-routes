@@ -1,10 +1,12 @@
 import { Compiler } from 'webpack';
 
-type routingModeType = 'browser' | 'hash';
+type modeType = 'browser' | 'hash';
 interface IAutoRoutes {
-    excludeFolders?: string[];
-    routingMode?: routingModeType;
-    onlyRoutes?: boolean;
+    context?: string;
+    entry?: string;
+    ignoreFolders?: string[];
+    ignoreFiles?: string[];
+    mode?: modeType;
     indexPath?: string;
 }
 interface Options {
@@ -16,21 +18,26 @@ interface IAppData {
     absPagesPath: string;
     absRouterPath: string;
     absLayoutsPath: string;
-    excludeFolders: string[];
-    routingMode: 'browser' | 'hash';
+    ignoreFolders: string[];
+    ignoreFiles: string[];
+    mode: 'browser' | 'hash';
     indexPath: string;
 }
 declare class WebpackPluginAutoRoutes {
-    excludeFolders: string[];
-    routingMode: routingModeType;
+    context: string;
+    entry: string;
+    ignoreFolders: string[];
+    ignoreFiles: string[];
+    mode: modeType;
     indexPath: string;
     isTsComponent: boolean;
     hasLayouts: boolean;
     isDev: boolean;
-    constructor(options: IAutoRoutes);
+    constructor(options?: IAutoRoutes);
     apply(compiler: Compiler): void;
-    run(): void;
-    getAppData({ cwd }: Options): IAppData;
+    private run;
+    private getAppData;
+    private generate;
 }
 
-export { type IAppData, type IAutoRoutes, type Options, WebpackPluginAutoRoutes as default, type routingModeType };
+export { type IAppData, type IAutoRoutes, type Options, WebpackPluginAutoRoutes as default, type modeType };
