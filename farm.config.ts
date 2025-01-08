@@ -15,6 +15,7 @@ export default defineConfig({
       targetEnv: 'node',
       format
     },
+    external: ['chokidar'],
     partialBundling: {
       enforceResources: [
         {
