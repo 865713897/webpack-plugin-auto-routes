@@ -12,26 +12,23 @@ import type { dirType, fileListType } from './interfaces.js';
 export interface GenerateRouteOptions {
   dirs: dirType[];
   resolvedPath: string; // 文件使用路径
-  writeToDisk?: boolean; // 是否写入磁盘
   ignoredNames?: string[]; // 忽略的文件名
 }
 
 export default class GenerateRoute {
   private resolvedPath: string;
-  private writeToDisk: boolean;
   private fileListCache: fileListType[] | null = null;
   private ignoredRegex: RegExp = null;
   private metaCache = new CacheManage();
   private dirs: dirType[];
 
   constructor(opts: GenerateRouteOptions) {
-    const { ignoredNames = [], resolvedPath, dirs, writeToDisk } = opts;
+    const { ignoredNames = [], resolvedPath, dirs } = opts;
     this.resolvedPath = resolvedPath;
     this.ignoredRegex = new RegExp(
       `${[...DEFAULT_IGNORED_NAMES, ...ignoredNames].join('|')}`
     );
     this.dirs = dirs;
-    this.writeToDisk = writeToDisk;
   }
 
   // 生成文件内容

@@ -8,7 +8,7 @@ export default defineConfig({
       // watchOptions: {
       //   ignored: '',
       // },
-      plugins: [new AutoRoutesPlugin()],
+      plugins: [new AutoRoutesPlugin({ moduleType: 'tsx' })],
     },
   },
   plugins: [pluginReact()],

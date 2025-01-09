@@ -10,6 +10,7 @@ import type { dirType } from './interfaces.js';
 
 interface Options {
   dirs?: string | (string | dirType)[];
+  moduleType?: 'jsx' | 'tsx';
 }
 
 type UpdateType = null | 'fileListChange' | 'fileMetaChange';
@@ -49,21 +50,9 @@ export default class WebpackPluginAutoRoutes {
           const hasWatchFile = removedFiles.some((file) =>
             this.generator.isWatchFile(file)
           );
-          const removeMetaFiles = removedFiles.filter((file) =>
-            this.generator.isMetaFile(file)
-          );
-          let updateType: UpdateType = null;
-          if (removeMetaFiles.length) {
-            updateType = 'fileMetaChange';
-            this.generator.clearMetaCache(removeMetaFiles);
-          }
           if (hasWatchFile) {
-            updateType = 'fileListChange';
+            await this.writeFile('fileListChange');
           }
-          if (updateType) {
-            await this.writeFile(updateType);
-          }
-          console.log('removedFiles');
         }
         cb();
       }
@@ -83,23 +72,20 @@ export default class WebpackPluginAutoRoutes {
 
     watcher.on(
       'all',
-      debounce((event, filename) => {
-        if (
-          !this.generator.isWatchFile(filename) &&
-          !this.generator.isMetaFile(filename)
-        ) {
-          return;
-        }
-        console.log(event, 'event', filename);
+      debounce(async (event, filename) => {
         let updateType: UpdateType = null;
-        if (event === 'add') {
-          updateType = 'fileListChange';
-        } else if (event === 'change' && this.generator.isMetaFile(filename)) {
-          updateType = 'fileMetaChange';
-          this.generator.clearMetaCache(filename);
+        if (this.generator.isWatchFile(filename)) {
+          if (event === 'add') {
+            updateType = 'fileListChange';
+          }
+        } else if (this.generator.isMetaFile(filename)) {
+          if (event === 'unlink' || event === 'change') {
+            updateType = 'fileMetaChange';
+            this.generator.clearMetaCache(filename);
+          }
         }
         if (updateType) {
-          this.writeFile(updateType);
+          await this.writeFile(updateType);
         }
       }, 300)
     );
@@ -107,7 +93,7 @@ export default class WebpackPluginAutoRoutes {
 }
 
 function resolveOptions(opts: Options) {
-  const { dirs, ...rest } = opts;
+  const { dirs, moduleType = 'tsx', ...rest } = opts;
   const cwd = process.cwd();
   let resolveDirs: dirType[] = [];
 
@@ -135,7 +121,7 @@ function resolveOptions(opts: Options) {
   });
 
   const module = join(cwd, '.virtual_routes');
-  const output = join(module, 'index.tsx');
+  const output = join(module, `index.${moduleType}`);
 
   return {
     dirs: resolveDirs,

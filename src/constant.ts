@@ -22,3 +22,4 @@ export const DEFAULT_IGNORED_NAMES = [
   'const',
 ];
 export const VIRTUAL_ALIAS = 'virtual_routes';
+export const CWD = process.cwd();

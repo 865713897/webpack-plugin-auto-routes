@@ -10,11 +10,13 @@
     "noImplicitAny": true,
     "sourceMap": true,
     "target": "es2020",
+    "allowJs": true,
     "module": "node16",
     "moduleResolution": "node16",
     "declaration": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
     "skipDefaultLibCheck": true,
     "skipLibCheck": true,
     "resolveJsonModule": true

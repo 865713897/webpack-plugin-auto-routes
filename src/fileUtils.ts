@@ -6,6 +6,7 @@ import {
   ROUTE_PATH_REGEX,
   LAYOUT_FILE_REGEX,
   LAYOUT_ID,
+  CWD,
 } from './constant.js';
 import CacheManage from './cacheManage.js';
 import type { fileListType } from './interfaces.js';
@@ -91,7 +92,11 @@ export function parseRoutes(
       }
 
       routeComponents.push(
-        `      '${metaData.id}': withLazyLoad(React.lazy(() => import('${relativePath}')))`
+        `      '${
+          metaData.id
+        }': withLazyLoad(React.lazy(() => import(/* webpackChunkName: '${getChunkName(
+          file
+        )}' */'${relativePath}')))`
       );
 
       routes.push(
@@ -149,4 +154,17 @@ export function getRelativePath(from: string, to: string) {
   relativePath += downSteps.join('/');
 
   return relativePath;
+}
+
+export function getChunkName(file: string) {
+  const nameList = file
+    .replace(CWD, '')
+    .replace(/\.(jsx?|tsx?)$/, '')
+    .slice(1)
+    .toLocaleLowerCase()
+    .split(sep);
+  if (nameList.length > 5) {
+    return nameList.slice(-5).join('_');
+  }
+  return nameList.join('_');
 }

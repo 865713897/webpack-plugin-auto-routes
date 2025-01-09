@@ -1,0 +1,14 @@
+{
+  "jsc": {
+    "parser": {
+      "syntax": "typescript",
+      "jsx": true,
+      "tsx": true,
+      "decorators": false,
+      "dynamicImport": true
+    },
+    "preserveAllComments": true,
+    "target": "es2015"
+  },
+  "minify": true
+}
