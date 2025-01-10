@@ -115,7 +115,8 @@ export function filePathToRoutePath(
     .replace(/\\/g, '/')
     .replace(ROUTE_PATH_REGEX, '')
     .slice(1)
-    .toLocaleLowerCase();
+    .replace(/([a-z])([A-Z])/g, '$1-$2') // 将驼峰式命名转换为连字符命名
+    .toLowerCase();
 }
 
 export function getDirTarget(dir: string, isGlobal: boolean): string {
@@ -155,14 +156,23 @@ export function getRelativePath(from: string, to: string) {
 }
 
 export function getChunkName(file: string) {
-  const nameList = file
+  const relativePath = file
     .replace(CWD, '')
     .replace(/\.(jsx?|tsx?)$/, '')
-    .slice(1)
-    .toLocaleLowerCase()
-    .split(sep);
-  if (nameList.length > 5) {
-    return nameList.slice(-5).join('_');
+    .slice(1);
+  const nameParts = relativePath.split(sep);
+  const meaningfulParts = nameParts.slice(-2);
+  let baseName = meaningfulParts.join('_');
+  const hash = simpleHash(relativePath);
+  baseName = `${baseName}_${hash}`;
+
+  return baseName;
+}
+
+function simpleHash(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) % 1e8; // 乘 31 累积并取模
   }
-  return nameList.join('_');
+  return hash.toString(36); // 转为 36 进制字符串
 }

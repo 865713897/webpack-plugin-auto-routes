@@ -1,7 +1,9 @@
-import React from 'react';
-import { useParams } from 'react-router-dom';
+import React from "react";
 
 export default function UserId() {
-  const { id } = useParams();
-  return <div>This is User-{id} Page!</div>;
+  return (
+    <div>
+      <div>This is UserId Page!</div>
+    </div>
+  )
 }

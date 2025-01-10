@@ -1,5 +1,9 @@
 import React from 'react';
 
 export default function Index() {
-  return <div>This is Index Page!</div>;
+  return (
+    <div>
+      <div>This is Index Page!</div>
+    </div>
+  );
 }
