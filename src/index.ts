@@ -1,5 +1,5 @@
 import { join, isAbsolute } from 'path';
-import fs from 'fs-extra';
+import fs from 'fs';
 import chokidar from 'chokidar';
 
 import GenerateRoute from './generate.js';
@@ -118,6 +118,7 @@ function resolveOptions(opts: Options) {
     dir: join(cwd, 'src/layouts'),
     basePath: '',
     isGlobal: true,
+    pattern: /layouts\/index\.(jsx?|tsx?)$/,
   });
 
   const module = join(cwd, '.virtual_routes');

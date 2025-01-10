@@ -7,22 +7,8 @@ import {
 } from 'react-router-dom';
 import { getRoutes } from 'virtual-routes';
 
-interface RouteConfig {
-  id: string;
-  parentId?: string;
-  path: string;
-  isLayout?: boolean;
-  [key: string]: any;
-}
-
-type RoutesMap = Record<string, RouteConfig>;
-type RouteComponentsMap = Record<string, React.ComponentType<any>>;
-
 export default function AppRouter() {
-  const {
-    routes,
-    routeComponents,
-  }: { routes: RoutesMap; routeComponents: RouteComponentsMap } = getRoutes();
+  const { routes = {}, routeComponents = {} } = getRoutes() || {};
 
   const renderRoutes = () => {
     return Object.keys(routeComponents).map((key) => {
