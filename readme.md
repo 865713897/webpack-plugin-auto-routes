@@ -107,7 +107,7 @@ interface dirOptions {
    * 过滤规则
    * @example /\.(jsx?|tsx)$/
    */
-  pattern: RegExp;
+  pattern?: RegExp;
 }
 ```
 
@@ -124,9 +124,9 @@ interface dirOptions {
 
 ### 路由元数据
 
-允许用户使用.meta.json 文件为每个路由配置附加信息，meta 文件必须放在与路由文件同级目录下，文件名必须以.meta.json 结尾。
+允许用户使用 `.meta.json` 文件为每个路由配置附加信息，`meta` 文件必须放在与路由文件同级目录下，文件名必须以 `.meta.json` 结尾。
 
-你可以在 meta 中配置的属性有：
+你可以在 `meta` 中配置的属性有：
 
 - `id`: 路由 id，默认生成，例如 `src/pages/about` 会生成 `about` 作为 id，此 id 会在 routeComponents 中对应一个组件
 - `path`: 路由路径，默认生成，例如 `src/pages/about` 会生成 `/about` 作为 path
