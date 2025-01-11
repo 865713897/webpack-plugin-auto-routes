@@ -118,7 +118,7 @@ function resolveOptions(opts: Options) {
     dir: join(cwd, 'src/layouts'),
     basePath: '',
     isGlobal: true,
-    pattern: /layouts\/index\.(jsx?|tsx?)$/,
+    pattern: /layouts[\\/]+index\.(jsx?|tsx?)$/,
   });
 
   const module = join(cwd, '.virtual_routes');
