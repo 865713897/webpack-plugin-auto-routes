@@ -1,4 +1,4 @@
-import { join, isAbsolute } from 'path';
+import { join, isAbsolute, posix } from 'path';
 import fs from 'fs';
 import chokidar from 'chokidar';
 
@@ -97,17 +97,16 @@ function resolveOptions(opts: Options) {
   let resolveDirs: dirType[] = [];
 
   if (!dirs) {
-    resolveDirs = [{ dir: join(cwd, 'src/pages'), basePath: '' }];
+    resolveDirs = [{ dir: resolvePath(cwd, 'src/pages'), basePath: '' }];
   } else if (typeof dirs === 'string') {
-    const dir = isAbsolute(dirs) ? dirs : join(cwd, dirs);
-    resolveDirs = [{ dir, basePath: '' }];
+    resolveDirs = [{ dir: resolvePath(cwd, dirs), basePath: '' }];
   } else if (Array.isArray(dirs)) {
     resolveDirs = dirs.map((d) => {
       if (typeof d === 'string') {
-        return { dir: isAbsolute(d) ? d : join(cwd, d), basePath: '' };
+        return { dir: resolvePath(cwd, d), basePath: '' };
       }
       return {
-        dir: isAbsolute(d.dir) ? d.dir : join(cwd, d.dir),
+        dir: resolvePath(cwd, d.dir),
         basePath: d.basePath || '',
         pattern:
           typeof d.pattern === 'string' ? new RegExp(d.pattern) : d.pattern,
@@ -115,14 +114,13 @@ function resolveOptions(opts: Options) {
     });
   }
   resolveDirs.push({
-    dir: join(cwd, 'src/layouts'),
+    dir: resolvePath(cwd, 'src/layouts'),
     basePath: '',
     isGlobal: true,
     pattern: /layouts[\\/]+index\.(jsx?|tsx?)$/,
   });
-
-  const module = join(cwd, '.virtual_routes');
-  const output = join(module, `index.${moduleType}`);
+  const module = resolvePath(cwd, '.virtual_routes');
+  const output = resolvePath(module, `index.${moduleType}`);
 
   return {
     dirs: resolveDirs,
@@ -130,4 +128,12 @@ function resolveOptions(opts: Options) {
     module,
     ...rest,
   };
+}
+
+function resolvePath(cwd: string, dir: string): string {
+  // 统一使用 posix 格式路径
+  const absolutePath = isAbsolute(dir)
+    ? dir.split('\\').join('/')
+    : join(cwd, dir);
+  return absolutePath.split('\\').join('/'); // 转换为 posix 格式
 }

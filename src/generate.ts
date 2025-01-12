@@ -36,15 +36,18 @@ export default class GenerateRoute {
   async generateFileContent(
     updateType: null | 'fileListChange' | 'fileMetaChange'
   ) {
+
     const fileList = await this.getFileList(
       this.dirs,
       updateType !== 'fileListChange'
     );
+
     const { routes, routeComponents } = parseRoutes(
       fileList,
       this.resolvedPath,
       this.metaCache
     );
+
     const content = generateRouterTemplate(routes, routeComponents);
 
     return content;
@@ -61,7 +64,9 @@ export default class GenerateRoute {
       ignore.push(...[`**/${item}.*`, `**/${item}/**`]);
     }
     for (const { dir, basePath, pattern, isGlobal } of dirs) {
-      let files = await fg(`${dir}/**/*.@(tsx|jsx|ts|js)`, {
+      let files = await fg('**/*.@(tsx|jsx|ts|js)', {
+        cwd: dir,
+        absolute: true,
         onlyFiles: true,
         ignore,
       });

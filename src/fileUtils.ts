@@ -1,4 +1,4 @@
-import { join, sep } from 'path';
+import { join } from 'path';
 import fs from 'fs';
 import {
   PAGE_FILE_REGEX,
@@ -98,7 +98,7 @@ export function filePathToRoutePath(
 }
 
 export function getDirTarget(dir: string, isGlobal: boolean): string {
-  return isGlobal ? LAYOUT_ID : `@@${dir.split(sep).pop()}-layout`;
+  return isGlobal ? LAYOUT_ID : `@@${dir.split('/').pop()}-layout`;
 }
 
 export function normalizePath(path: string) {
@@ -108,8 +108,8 @@ export function normalizePath(path: string) {
 export function getRelativePath(from: string, to: string) {
   if (from === to) return '';
 
-  const fromParts = from.split(sep);
-  const toParts = to.split(sep);
+  const fromParts = from.split('/');
+  const toParts = to.split('/');
 
   let i = 0;
   while (
@@ -138,7 +138,7 @@ export function getChunkName(file: string) {
     .replace(CWD, '')
     .replace(/\.(jsx?|tsx?)$/, '')
     .slice(1);
-  const nameParts = relativePath.split(sep);
+  const nameParts = relativePath.split('/');
   const meaningfulParts = nameParts.slice(-2);
   let baseName = meaningfulParts.join('_');
   const hash = simpleHash(relativePath);
