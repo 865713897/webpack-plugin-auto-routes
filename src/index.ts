@@ -23,7 +23,6 @@ export default class WebpackPluginAutoRoutes {
     const { dirs, output, module } = resolveOptions(options);
     this.generator = new GenerateRoute({ dirs, resolvedPath: output });
     this.output = output;
-
     if (!fs.existsSync(module)) {
       fs.mkdirSync(module);
     }
@@ -110,7 +109,8 @@ function resolveOptions(opts: Options) {
       return {
         dir: isAbsolute(d.dir) ? d.dir : join(cwd, d.dir),
         basePath: d.basePath || '',
-        pattern: d.pattern,
+        pattern:
+          typeof d.pattern === 'string' ? new RegExp(d.pattern) : d.pattern,
       };
     });
   }

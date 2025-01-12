@@ -1,5 +1,4 @@
 import { join, sep } from 'path';
-import fsp from 'fs/promises';
 import fs from 'fs';
 import {
   PAGE_FILE_REGEX,
@@ -10,27 +9,6 @@ import {
 } from './constant.js';
 import CacheManage from './cacheManage.js';
 import type { fileListType } from './interfaces.js';
-
-export async function scanDirectory(directory: string): Promise<string[]> {
-  const isExist = await fsp
-    .access(directory)
-    .then(() => true)
-    .catch(() => false);
-  if (!isExist) return [];
-
-  const entries = await fsp.readdir(directory, { withFileTypes: true });
-  const files: string[] = [];
-  for (const entry of entries) {
-    const entryPath = join(directory, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...(await scanDirectory(entryPath)));
-    } else {
-      files.push(entryPath);
-    }
-  }
-
-  return files;
-}
 
 // 解析路由文件
 export function parseRoutes(

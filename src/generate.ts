@@ -1,5 +1,6 @@
+import fg from 'fast-glob';
 import { generateRouterTemplate } from './routeTemplate.js';
-import { scanDirectory, parseRoutes } from './fileUtils.js';
+import { parseRoutes } from './fileUtils.js';
 import CacheManage from './cacheManage.js';
 import {
   PAGE_FILE_REGEX,
@@ -39,13 +40,11 @@ export default class GenerateRoute {
       this.dirs,
       updateType !== 'fileListChange'
     );
-
     const { routes, routeComponents } = parseRoutes(
       fileList,
       this.resolvedPath,
       this.metaCache
     );
-
     const content = generateRouterTemplate(routes, routeComponents);
 
     return content;
@@ -57,14 +56,18 @@ export default class GenerateRoute {
       return this.fileListCache;
     }
     const fileList: fileListType[] = [];
+    const ignore = ['**/node_modules/**', '**/*.d.ts'];
+    for (const item of DEFAULT_IGNORED_NAMES) {
+      ignore.push(...[`**/${item}.*`, `**/${item}/**`]);
+    }
     for (const { dir, basePath, pattern, isGlobal } of dirs) {
-      let files = await scanDirectory(dir);
-      files = files.filter(
-        (filename) =>
-          this.isPageFile(filename) &&
-          this.isNotIgnoredFile(filename) &&
-          (!pattern || pattern.test(filename))
-      );
+      let files = await fg(`${dir}/**/*.@(tsx|jsx|ts|js)`, {
+        onlyFiles: true,
+        ignore,
+      });
+      if (pattern) {
+        files = files.filter((file) => pattern.test(file));
+      }
       fileList.push({ dir, basePath, files, isGlobal });
     }
     this.fileListCache = fileList;
@@ -83,10 +86,7 @@ export default class GenerateRoute {
 
   // 是否为React页面文件
   isPageFile(filename: string) {
-    return (
-      PAGE_FILE_REGEX.test(filename) && // 文件扩展名符合页面组件
-      !TYPE_FILE_REGEX.test(filename) // 排除类型声明文件
-    );
+    return PAGE_FILE_REGEX.test(filename) && !TYPE_FILE_REGEX.test(filename); // 文件扩展名符合页面组件
   }
 
   // 是否为忽略文件

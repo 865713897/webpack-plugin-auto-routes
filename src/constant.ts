@@ -18,6 +18,7 @@ export const DEFAULT_IGNORED_NAMES = [
   'interfaces',
   'api',
   'constants',
+  'constant',
   'models',
   'const',
 ];
