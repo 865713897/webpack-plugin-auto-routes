@@ -6,20 +6,17 @@ export const LAYOUT_FILE_REGEX =
   /layouts?(\.(jsx?|tsx)|[\\/]+index.(jsx?|tsx?))$/i;
 export const LAYOUT_ID = '@@global-layout';
 export const DEFAULT_IGNORED_NAMES = [
-  'components',
+  'component',
   'service',
-  'services',
-  'utils',
-  'assets',
-  'styles',
-  'types',
-  'hooks',
+  'util',
+  'asset',
+  'style',
+  'type',
+  'hook',
   'interface',
-  'interfaces',
   'api',
-  'constants',
   'constant',
-  'models',
+  'model',
   'const',
 ];
 export const VIRTUAL_ALIAS = 'virtual_routes';

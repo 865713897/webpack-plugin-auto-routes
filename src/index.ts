@@ -1,4 +1,4 @@
-import { join, isAbsolute, posix } from 'path';
+import { join, isAbsolute, normalize } from 'path';
 import fs from 'fs';
 import chokidar from 'chokidar';
 

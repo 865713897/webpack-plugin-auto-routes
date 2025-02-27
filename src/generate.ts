@@ -22,9 +22,15 @@ export default class GenerateRoute {
   private ignoredRegex: RegExp = null;
   private metaCache = new CacheManage();
   private dirs: dirType[];
+  private ignore: string[];
 
   constructor(opts: GenerateRouteOptions) {
     const { ignoredNames = [], resolvedPath, dirs } = opts;
+    const ignore = ['**/node_modules/**', '**/*.d.ts'];
+    for (const item of DEFAULT_IGNORED_NAMES) {
+      ignore.push(...[`**/${item}?(s).*`, `**/${item}?(s)/**`]);
+    }
+    this.ignore = ignore;
     this.resolvedPath = resolvedPath;
     this.ignoredRegex = new RegExp(
       `${[...DEFAULT_IGNORED_NAMES, ...ignoredNames].join('|')}`
@@ -36,7 +42,6 @@ export default class GenerateRoute {
   async generateFileContent(
     updateType: null | 'fileListChange' | 'fileMetaChange'
   ) {
-
     const fileList = await this.getFileList(
       this.dirs,
       updateType !== 'fileListChange'
@@ -59,16 +64,12 @@ export default class GenerateRoute {
       return this.fileListCache;
     }
     const fileList: fileListType[] = [];
-    const ignore = ['**/node_modules/**', '**/*.d.ts'];
-    for (const item of DEFAULT_IGNORED_NAMES) {
-      ignore.push(...[`**/${item}.*`, `**/${item}/**`]);
-    }
     for (const { dir, basePath, pattern, isGlobal } of dirs) {
       let files = await fg('**/*.@(tsx|jsx|ts|js)', {
         cwd: dir,
         absolute: true,
         onlyFiles: true,
-        ignore,
+        ignore: this.ignore,
       });
       if (pattern) {
         files = files.filter((file) => pattern.test(file));
@@ -81,12 +82,10 @@ export default class GenerateRoute {
   }
 
   // 清除meta缓存
-  clearMetaCache(key: null | string | string[] = null) {
-    if (Array.isArray(key)) {
-      key.forEach((k) => this.metaCache.clear(k));
-    } else {
-      this.metaCache.clear(key);
-    }
+  clearMetaCache(key: null | string = null) {
+    let newKey = key || '';
+    newKey = newKey.replace(/\\/g, '/');
+    this.metaCache.clear(newKey);
   }
 
   // 是否为React页面文件
@@ -101,10 +100,11 @@ export default class GenerateRoute {
 
   // 是否为可监控文件
   isWatchFile(filename: string) {
+    const name = filename.replace(/\\/g, '/');
     return (
-      this.dirs.some(({ dir }) => filename.startsWith(dir)) &&
-      this.isPageFile(filename) &&
-      this.isNotIgnoredFile(filename)
+      this.dirs.some(({ dir }) => name.startsWith(dir)) &&
+      this.isPageFile(name) &&
+      this.isNotIgnoredFile(name)
     );
   }
 
