@@ -1,6 +1,6 @@
 // @route-parent-id: user
-// @route-meta: { "title": "Users Id" }
-
+// @route-meta: { "title": "User Id" }
+import React from 'react';
 import { useParams } from 'react-router-dom';
 
 export default function UserId() {

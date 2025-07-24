@@ -5,10 +5,7 @@ import AutoRoutesPlugin from 'webpack-plugin-auto-routes';
 export default defineConfig({
   tools: {
     rspack: {
-      // watchOptions: {
-      //   ignored: '',
-      // },
-      plugins: [new AutoRoutesPlugin({ moduleType: 'tsx' })],
+      plugins: [new AutoRoutesPlugin()],
     },
   },
   plugins: [pluginReact()],
