@@ -5,6 +5,8 @@ import chokidar from 'chokidar';
 import RouteContext from './core/context.js';
 import { clearRouteMetaCache } from './core/routeMeta.js';
 import { tryPaths, unifiedUnixPathStyle } from './utils/index.js';
+import { handleFileChange } from './utils/handleFileChange.js';
+import { debounce } from './utils/debounce.js';
 import { FrameworkEnum } from './constant.js';
 
 import type { Compiler } from 'webpack';
@@ -18,6 +20,8 @@ export default class WebpackPluginAutoRoutes {
   private output: string;
   private ctx: RouteContext;
   private coldStart: boolean;
+  private addFiles = new Set<string>();
+  private changeFiles = new Set<string>();
 
   constructor(options: Options = {}) {
     const { dirs, output, cwd } = resolveOptions(options);
@@ -66,6 +70,7 @@ export default class WebpackPluginAutoRoutes {
           if (this.ctx.isWatchFile(unixFilename)) {
             shouldReload = true;
             this.ctx.removeFile(unixFilename);
+            clearRouteMetaCache(unixFilename);
           }
         });
         if (shouldReload) {
@@ -85,24 +90,42 @@ export default class WebpackPluginAutoRoutes {
   startWatchFiles(dirs: DirType[]) {
     const watcher = chokidar.watch(
       dirs.map(({ dir }) => dir),
-      { ignoreInitial: true }
+      {
+        ignoreInitial: true,
+      }
     );
+
+    const debounceFlush = debounce(async () => {
+      let shouldReload = false;
+      for (const file of Array.from(this.addFiles)) {
+        this.ctx.addFile(file);
+        shouldReload = true;
+      }
+      for (const file of Array.from(this.changeFiles)) {
+        if (await handleFileChange(file)) {
+          shouldReload = true;
+        }
+      }
+
+      this.addFiles.clear();
+      this.changeFiles.clear();
+      if (shouldReload) {
+        await this.load();
+      }
+    }, 300);
 
     watcher.on('all', async (event, filename) => {
       const unixFilename = unifiedUnixPathStyle(filename);
-
       if (!this.ctx.isWatchFile(unixFilename)) return;
 
       const handlers: Record<string, () => void> = {
-        add: () => this.ctx.addFile(unixFilename),
-        // unlink: () => this.ctx.removeFile(unixFilename),
-        change: () => clearRouteMetaCache(unixFilename),
+        add: () => this.addFiles.add(unixFilename),
+        change: () => this.changeFiles.add(unixFilename),
       };
-
       const handler = handlers[event];
       if (handler) {
         handler();
-        await this.load();
+        debounceFlush();
       }
     });
   }

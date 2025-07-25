@@ -72,7 +72,10 @@ const META_SCHEMA: Record<keyof RouteMeta, MetaSchemaItem> = {
   },
 };
 
-function extractMetaFromContent(content: string, filePath: string): RouteMeta {
+export function extractMetaFromContent(
+  content: string,
+  filePath: string
+): RouteMeta {
   const meta: RouteMeta = {};
 
   for (const [key, { tag, validate, message }] of Object.entries(META_SCHEMA)) {
@@ -110,7 +113,10 @@ export async function getRouteMetaFromFiles(
         routeMetaCache.set(filePath, meta);
         result[filePath] = meta;
       } catch (err) {
-        console.warn(`[webpack-plugin-auto-routes] Failed to read ${filePath}:`, err);
+        console.warn(
+          `[webpack-plugin-auto-routes] Failed to read ${filePath}:`,
+          err
+        );
       }
     })
   );
@@ -124,4 +130,13 @@ export function clearRouteMetaCache(filePath?: string) {
   } else {
     routeMetaCache.clear();
   }
+}
+
+export function equalRouteMeta(filePath: string, meta: RouteMeta): boolean {
+  const oldMeta = routeMetaCache.get(filePath);
+  return JSON.stringify(oldMeta) === JSON.stringify(meta);
+}
+
+export function setRouteMetaCache(filePath: string, meta: RouteMeta) {
+  routeMetaCache.set(filePath, meta);
 }
