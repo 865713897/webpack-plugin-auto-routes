@@ -5,6 +5,7 @@ import { DefaultIgnoreNames, FrameworkEnum } from '../constant.js';
 import { getResolvedRoutes } from './parse.js';
 import { getResolver } from '../resolver/index.js';
 import { getRouteMetaFromFiles } from './routeMeta.js';
+import { toCaseInsensitiveGlob } from '../utils/index.js';
 
 import { DirType, FileItem } from '../types/index.js';
 
@@ -28,7 +29,12 @@ export default class Context {
     this.generatePath = opts.generatePath;
 
     this.ignore = DefaultIgnoreNames.reduce((acc, cur) => {
-      acc.push(...[`**/${cur}?(s).*`, `**/${cur}?(s)/**`]);
+      acc.push(
+        ...[
+          `**/${toCaseInsensitiveGlob(cur)}.*`,
+          `**/${toCaseInsensitiveGlob(cur)}/**`,
+        ]
+      );
       return acc;
     }, []);
     this.ignore.push('**/*.d.ts');
@@ -44,7 +50,8 @@ export default class Context {
     let filePaths: string[] = [];
 
     for (const { dir, basePath, pattern, isGlobal } of this.dirs) {
-      let files = await fg(`**/*.@(${suffix})`, {
+      const source = `${isGlobal ? 'index' : '**/*'}.@(${suffix})`;
+      let files = await fg(source, {
         cwd: dir,
         absolute: true,
         onlyFiles: true,

@@ -161,7 +161,6 @@ function resolveOptions(opts: Options) {
     dir: unifiedUnixPathStyle(join(cwd, 'src/layouts')),
     basePath: '',
     isGlobal: true,
-    pattern: /layouts[\\/]+index\.(jsx?|tsx?)$/,
   });
   const hasTsConfig = tryPaths([join(cwd, 'tsconfig.json')]);
   const outputDir = unifiedUnixPathStyle(join(cwd, '.virtual_routes'));

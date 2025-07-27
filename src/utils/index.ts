@@ -48,3 +48,14 @@ export function tryPaths(paths: string[]) {
   }
   return null;
 }
+
+export function toCaseInsensitiveGlob(str: string) {
+  return str
+    .split('')
+    .map((c) => {
+      const lower = c.toLowerCase();
+      const upper = c.toUpperCase();
+      return lower === upper ? c : `[${lower}${upper}]`;
+    })
+    .join('') + '?(s|S)';
+}
