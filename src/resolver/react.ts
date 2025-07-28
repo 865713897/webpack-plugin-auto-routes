@@ -12,9 +12,19 @@ function generateTemplate(input: string) {
   ].join('\n');
 }
 
+function isPageFile(filePath: string) {
+  return /.(t|j)sx?$/.test(filePath);
+}
+
+function isLayoutFile(filePath: string) {
+  return /layouts\/index.(t|j)sx?$/.test(filePath);
+}
+
 export function resolveReact() {
   return {
     suffix: 'tsx|ts|jsx|js',
+    isPageFile,
+    isLayoutFile,
     generateTemplate,
   };
 }

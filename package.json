@@ -38,6 +38,7 @@
     "@farmfe/core": "^1.6.3",
     "@farmfe/js-plugin-dts": "^0.6.4",
     "@types/node": "^20.17.12",
+    "@types/picomatch": "^4.0.1",
     "@types/react": "^19.0.3",
     "@types/react-dom": "^19.0.2",
     "@types/webpack": "^5.28.5",
@@ -45,7 +46,8 @@
   },
   "dependencies": {
     "chokidar": "^3.6.0",
-    "fast-glob": "^3.3.3"
+    "fast-glob": "^3.3.3",
+    "picomatch": "^4.0.3"
   },
   "files": [
     "build"

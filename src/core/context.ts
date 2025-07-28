@@ -1,5 +1,5 @@
 import fg from 'fast-glob';
-import fs from 'fs';
+import pm from 'picomatch';
 
 import { DefaultIgnoreNames, FrameworkEnum } from '../constant.js';
 import { getResolvedRoutes } from './parse.js';
@@ -7,7 +7,7 @@ import { getResolver } from '../resolver/index.js';
 import { getRouteMetaFromFiles } from './routeMeta.js';
 import { toCaseInsensitiveGlob } from '../utils/index.js';
 
-import { DirType, FileItem } from '../types/index.js';
+import { DirType, FileItem, ResolverType } from '../types/index.js';
 
 interface IContext {
   dirs: DirType[];
@@ -20,24 +20,21 @@ export default class Context {
   private ignore: string[];
   private fileListCache: FileItem[] = [];
   private framework: FrameworkEnum;
-  resolver: {
-    suffix: string;
-    generateTemplate: (input: string) => string;
-  };
+  resolver: ResolverType;
   constructor(opts: IContext) {
     this.dirs = opts.dirs;
     this.generatePath = opts.generatePath;
 
-    this.ignore = DefaultIgnoreNames.reduce((acc, cur) => {
-      acc.push(
-        ...[
+    this.ignore = DefaultIgnoreNames.reduce(
+      (acc, cur) => {
+        acc = acc.concat([
           `**/${toCaseInsensitiveGlob(cur)}.*`,
           `**/${toCaseInsensitiveGlob(cur)}/**`,
-        ]
-      );
-      return acc;
-    }, []);
-    this.ignore.push('**/*.d.ts');
+        ]);
+        return acc;
+      },
+      ['**/*.d.ts']
+    );
   }
 
   // 初始化时获取文件列表
@@ -75,9 +72,6 @@ export default class Context {
   }
 
   async generateFileContent() {
-    // if (!this.resolver) {
-
-    // }
     const { generateTemplate } = this.resolver;
     const fileList = this.getFileList();
 
@@ -96,18 +90,13 @@ export default class Context {
     this.resolver = getResolver(framework);
   }
 
-  // ✅ 增加文件（文件变动监听时调用）
+  // 增加文件（文件变动监听时调用）
   addFile(file: string) {
     const dirItem = this.dirs.find(({ dir }) => file.startsWith(dir));
     if (!dirItem) return;
 
-    const { dir, basePath, pattern } = dirItem;
-
     const cacheItem = this.fileListCache.find(
-      (item) =>
-        item.dir === dir &&
-        item.basePath === basePath &&
-        (!pattern || (pattern instanceof RegExp && pattern.test(file)))
+      (item) => item.dir === dirItem.dir && item.basePath === dirItem.basePath
     );
 
     if (cacheItem && !cacheItem.files.includes(file)) {
@@ -115,7 +104,7 @@ export default class Context {
     }
   }
 
-  // ✅ 删除文件（文件变动监听时调用）
+  // 删除文件（文件变动监听时调用）
   removeFile(file: string) {
     for (const fileGroup of this.fileListCache) {
       const index = fileGroup.files.indexOf(file);
@@ -126,25 +115,23 @@ export default class Context {
   }
 
   isWatchFile(filename: string) {
-    return (
-      this.dirs.some(({ dir }) => filename.startsWith(dir)) &&
-      this.isPageFile(filename) &&
-      !this.isIgnoreFile(filename)
+    const { isPageFile, isLayoutFile } = this.resolver;
+    const belongDirs = this.dirs.some(
+      ({ dir, isGlobal, pattern }) =>
+        filename.startsWith(dir) &&
+        (!pattern || (pattern instanceof RegExp && pattern.test(filename))) &&
+        (!isGlobal || (isGlobal && isLayoutFile(filename)))
     );
-  }
+    const isPage = isPageFile(filename);
+    const isIgnore = this.isIgnoreFile(filename);
 
-  isPageFile(filename: string) {
-    const pageFileRegexp =
-      this.framework === FrameworkEnum.REACT ? /.(j|t)sx?$/ : /.vue$/;
-    return (
-      pageFileRegexp.test(filename) && // 文件扩展名符合页面组件
-      !/\.d\.ts$/.test(filename) // 排除类型声明文件
-    );
+    return belongDirs && isPage && !isIgnore;
   }
 
   isIgnoreFile(filename: string) {
-    return DefaultIgnoreNames.some((pattern) =>
-      new RegExp(pattern).test(filename)
-    );
+    return this.ignore.some((item) => {
+      const isMatch = pm(item);
+      return isMatch(filename);
+    });
   }
 }

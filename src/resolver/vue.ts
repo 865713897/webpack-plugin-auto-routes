@@ -11,9 +11,19 @@ function generateTemplate(input: string) {
   ].join('\n');
 }
 
+function isPageFile(filePath: string) {
+  return /.vue$/.test(filePath);
+}
+
+function isLayoutFile(filePath: string) {
+  return /layouts\/index.vue$/.test(filePath);
+}
+
 export function resolveVue() {
   return {
     suffix: 'vue',
+    isPageFile,
+    isLayoutFile,
     generateTemplate,
   };
 }
