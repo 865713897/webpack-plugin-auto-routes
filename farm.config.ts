@@ -15,7 +15,7 @@ export default defineConfig({
       targetEnv: 'node',
       format,
     },
-    external: ['chokidar', 'fast-glob'],
+    external: ['chokidar', 'fast-glob', 'picomatch', 'readline'],
     partialBundling: {
       enforceResources: [
         {

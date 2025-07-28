@@ -1,4 +1,5 @@
-import fps from 'fs/promises';
+import { createReadStream } from 'fs';
+import readline from 'readline';
 
 export interface RouteMeta {
   id?: string;
@@ -108,7 +109,7 @@ export async function getRouteMetaFromFiles(
       }
 
       try {
-        const content = await fps.readFile(filePath, 'utf-8');
+        const content = await readHeaderComments(filePath);
         const meta = extractMetaFromContent(content, filePath);
         routeMetaCache.set(filePath, meta);
         result[filePath] = meta;
@@ -122,6 +123,23 @@ export async function getRouteMetaFromFiles(
   );
 
   return result;
+}
+
+export async function readHeaderComments(filePath: string): Promise<string> {
+  return new Promise((resolve) => {
+    const rs = createReadStream(filePath);
+    const rl = readline.createInterface({ input: rs });
+    let buffer = '';
+    rl.on('line', (line) => {
+      if (line.startsWith('//')) {
+        // 只读取注释信息
+        buffer += line + '\n';
+      } else {
+        rl.close();
+      }
+    });
+    rl.on('close', () => resolve(buffer));
+  });
 }
 
 export function clearRouteMetaCache(filePath?: string) {
