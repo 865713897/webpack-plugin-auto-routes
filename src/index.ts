@@ -4,16 +4,18 @@ import chokidar from 'chokidar';
 
 import RouteContext from './core/context.js';
 import { clearRouteMetaCache } from './core/routeMeta.js';
-import { tryPaths, unifiedUnixPathStyle } from './utils/index.js';
+import { tryPaths, unifiedUnixPathStyle, isEnumValue } from './utils/index.js';
 import { handleFileChange } from './utils/handleFileChange.js';
+import { detectFrameworkFromPackageJson } from './utils/detectFramework.js';
 import { debounce } from './utils/debounce.js';
-import { FrameworkEnum } from './constant.js';
+import { frameworkMap, frameworkList } from './constant.js';
 
 import type { Compiler } from 'webpack';
-import type { DirType } from './types/index.js';
+import type { DirType, Framework } from './types/index.js';
 
 interface Options {
   dirs?: string | (string | DirType)[];
+  framework?: Framework;
 }
 
 export default class WebpackPluginAutoRoutes {
@@ -27,17 +29,19 @@ export default class WebpackPluginAutoRoutes {
     const { dirs, output, cwd } = resolveOptions(options);
     this.coldStart = true;
     this.output = output;
-    this.ctx = new RouteContext({ dirs, generatePath: output });
 
-    const framework = detectFrameworkFromPackageJson(cwd);
-    if (framework !== 'unknown') {
-      this.ctx.setFramework(framework);
-    } else {
+    const framework = options.framework || detectFrameworkFromPackageJson(cwd);
+    if (!isEnumValue(frameworkMap, framework)) {
       throw new Error(
-        '[webpack-plugin-auto-routes] Unable to parse framework from package.json file'
+        framework === 'unknown'
+          ? '[webpack-plugin-auto-routes] Cannot detect framework from package.json, please set framework manually'
+          : `[webpack-plugin-auto-routes] framework must be one of ${frameworkList.join(
+              '|'
+            )}, but got ${framework}`
       );
     }
 
+    this.ctx = new RouteContext({ dirs, generatePath: output, framework });
     this.startWatchFiles(dirs);
   }
 
@@ -131,32 +135,34 @@ export default class WebpackPluginAutoRoutes {
   }
 }
 
+function normalizeDirEntry(entry: string | DirType, cwd: string): DirType {
+  if (typeof entry === 'string') {
+    return {
+      dir: unifiedUnixPathStyle(join(cwd, entry)),
+      basePath: '',
+    };
+  }
+  return {
+    dir: unifiedUnixPathStyle(join(cwd, entry.dir)),
+    basePath: entry.basePath || '',
+    pattern:
+      typeof entry.pattern === 'string'
+        ? new RegExp(entry.pattern)
+        : entry.pattern,
+  };
+}
+
 function resolveOptions(opts: Options) {
   const { dirs } = opts;
   const cwd = process.cwd();
   let resolveDirs: DirType[] = [];
-
-  if (!dirs) {
-    resolveDirs = [
-      { dir: unifiedUnixPathStyle(join(cwd, 'src/pages')), basePath: '' },
-    ];
-  } else if (typeof dirs === 'string') {
-    resolveDirs = [
-      { dir: unifiedUnixPathStyle(join(cwd, dirs)), basePath: '' },
-    ];
-  } else if (Array.isArray(dirs)) {
-    resolveDirs = dirs.map((d) => {
-      if (typeof d === 'string') {
-        return { dir: unifiedUnixPathStyle(join(cwd, d)), basePath: '' };
-      }
-      return {
-        dir: unifiedUnixPathStyle(join(cwd, d.dir)),
-        basePath: d.basePath || '',
-        pattern:
-          typeof d.pattern === 'string' ? new RegExp(d.pattern) : d.pattern,
-      };
-    });
-  }
+  resolveDirs = (
+    Array.isArray(dirs)
+      ? dirs
+      : typeof dirs === 'string'
+      ? [dirs]
+      : ['src/pages']
+  ).map((entry) => normalizeDirEntry(entry, cwd));
   resolveDirs.push({
     dir: unifiedUnixPathStyle(join(cwd, 'src/layouts')),
     basePath: '',
@@ -179,22 +185,4 @@ function resolveOptions(opts: Options) {
     dirs: resolveDirs,
     output,
   };
-}
-
-function detectFrameworkFromPackageJson(cwd: string) {
-  try {
-    const pkgPath = join(cwd, 'package.json');
-    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
-    const deps = {
-      ...pkg.dependencies,
-      ...pkg.devDependencies,
-    };
-
-    if (deps.react) return FrameworkEnum.REACT;
-    if (deps.vue) return FrameworkEnum.VUE;
-
-    return 'unknown';
-  } catch (e) {
-    return 'unknown';
-  }
 }

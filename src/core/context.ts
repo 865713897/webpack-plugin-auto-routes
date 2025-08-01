@@ -1,16 +1,16 @@
 import fg from 'fast-glob';
 import pm from 'picomatch';
 
-import { DefaultIgnoreNames, FrameworkEnum } from '../constant.js';
-import { getResolvedRoutes } from './parse.js';
+import { DefaultIgnoreNames } from '../constant.js';
 import { getResolver } from '../resolver/index.js';
 import { getRouteMetaFromFiles } from './routeMeta.js';
 import { toCaseInsensitiveGlob } from '../utils/index.js';
 
-import { DirType, FileItem, ResolverType } from '../types/index.js';
+import { DirType, FileItem, ResolverType, Framework } from '../types/index.js';
 
 interface IContext {
   dirs: DirType[];
+  framework: Framework;
   generatePath: string;
 }
 
@@ -19,12 +19,11 @@ export default class Context {
   private generatePath: string;
   private ignore: string[];
   private fileListCache: FileItem[] = [];
-  private framework: FrameworkEnum;
-  resolver: ResolverType;
+  private resolver: ResolverType;
   constructor(opts: IContext) {
     this.dirs = opts.dirs;
     this.generatePath = opts.generatePath;
-
+    this.resolver = getResolver(opts.framework);
     this.ignore = DefaultIgnoreNames.reduce(
       (acc, cur) => {
         acc = acc.concat([
@@ -39,9 +38,6 @@ export default class Context {
 
   // 初始化时获取文件列表
   async getInitialFileList() {
-    if (!this.resolver) {
-      return;
-    }
     const { suffix } = this.resolver;
     let fileList: FileItem[] = [];
     let filePaths: string[] = [];
@@ -72,10 +68,10 @@ export default class Context {
   }
 
   async generateFileContent() {
-    const { generateTemplate } = this.resolver;
+    const { getResolvedRoutes, generateTemplate } = this.resolver;
     const fileList = this.getFileList();
 
-    const routesString = await getResolvedRoutes(this.framework, {
+    const routesString = await getResolvedRoutes({
       fileList,
       generatePath: this.generatePath,
     });
@@ -83,11 +79,6 @@ export default class Context {
     const template = generateTemplate(routesString);
 
     return template;
-  }
-
-  setFramework(framework: FrameworkEnum) {
-    this.framework = framework;
-    this.resolver = getResolver(framework);
   }
 
   // 增加文件（文件变动监听时调用）
@@ -115,12 +106,12 @@ export default class Context {
   }
 
   isWatchFile(filename: string) {
-    const { isPageFile, isLayoutFile } = this.resolver;
+    const { isPageFile, isGlobalLayoutFile } = this.resolver;
     const belongDirs = this.dirs.some(
       ({ dir, isGlobal, pattern }) =>
         filename.startsWith(dir) &&
         (!pattern || (pattern instanceof RegExp && pattern.test(filename))) &&
-        (!isGlobal || (isGlobal && isLayoutFile(filename)))
+        (!isGlobal || (isGlobal && isGlobalLayoutFile(filename)))
     );
     const isPage = isPageFile(filename);
     const isIgnore = this.isIgnoreFile(filename);

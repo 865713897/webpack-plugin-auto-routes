@@ -50,12 +50,21 @@ export function tryPaths(paths: string[]) {
 }
 
 export function toCaseInsensitiveGlob(str: string) {
-  return str
-    .split('')
-    .map((c) => {
-      const lower = c.toLowerCase();
-      const upper = c.toUpperCase();
-      return lower === upper ? c : `[${lower}${upper}]`;
-    })
-    .join('') + '?(s|S)';
+  return (
+    str
+      .split('')
+      .map((c) => {
+        const lower = c.toLowerCase();
+        const upper = c.toUpperCase();
+        return lower === upper ? c : `[${lower}${upper}]`;
+      })
+      .join('') + '?(s|S)'
+  );
+}
+
+export function isEnumValue<T extends Record<string, string | number>>(
+  enumObj: T,
+  value: unknown
+): value is T[keyof T] {
+  return (Object.values(enumObj) as unknown[]).includes(value);
 }

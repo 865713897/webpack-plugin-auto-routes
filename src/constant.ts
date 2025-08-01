@@ -13,7 +13,9 @@ export const DefaultIgnoreNames = [
   'const',
 ];
 
-export enum FrameworkEnum {
-  REACT = 'react',
-  VUE = 'vue',
-}
+export const frameworkMap = {
+  REACT: 'react',
+  VUE: 'vue',
+} as const;
+
+export const frameworkList = Object.values(frameworkMap);
