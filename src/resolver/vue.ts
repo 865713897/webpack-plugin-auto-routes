@@ -86,7 +86,7 @@ async function buildRouteMap(
 
       const routeMeta = routeMetas[file];
       route = { ...route, ...routeMeta };
-      route.Component = `__LAZY__lazy(() => import('${relativePath}'))__LAZY__`;
+      route.component = `__LAZY__lazy(() => import('${relativePath}'))__LAZY__`;
 
       routesMap[route.id] = route;
     }

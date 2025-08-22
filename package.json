@@ -1,6 +1,6 @@
 {
   "name": "webpack-plugin-auto-routes",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "file system based routing plugin for webpack",
   "main": "./build/cjs/index.cjs",
   "types": "./build/esm/index.d.ts",
